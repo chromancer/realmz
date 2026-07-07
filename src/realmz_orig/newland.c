@@ -367,13 +367,20 @@ startover:
           if ((q[up] < 9) && (q[up] > -1)) {
             if (c[charup].armor[2]) /**** fumble weapon ****/
             {
-              for (fumloop = 0; fumloop <= c[charup].numitems; fumloop++) {
+              short fumbleditem;
+              /* *** CHANGED FROM ORIGINAL IMPLEMENTATION ***
+               * Guard fumbled item drops against inventory and fumble queue bounds.
+               */
+              for (fumloop = 0; (fumloop < c[charup].numitems) && (fumloop < 30); fumloop++) {
                 if (c[charup].items[fumloop].id == c[charup].armor[2]) {
+                  if (fumtotal >= 20)
+                    goto donefumble;
+                  fumbleditem = c[charup].items[fumloop].id;
                   if (removeitem(charup, fumloop, FALSE, FALSE)) {
                     sound(-10121);
                     sound(-10123);
-                    fumque[fumtotal++] = c[charup].items[fumloop].id;
-                    dropitem(charup, c[charup].items[fumloop].id, fumloop, TRUE, FALSE);
+                    fumque[fumtotal++] = fumbleditem;
+                    dropitem(charup, fumbleditem, fumloop, TRUE, FALSE);
                     c[charup].armor[2] = c[charup].weaponnum = 0;
                     combatupdate2(charup);
                     goto donefumble;
@@ -1009,12 +1016,12 @@ startover:
 
       case 91: /***** Drop all equipment ****/
         for (loop = 0; loop <= charnum; loop++) {
-          itemcount = -1;
-          while (c[loop].numitems) {
-            itemcount++;
-            removeitem(loop, itemcount, FALSE, TRUE);
-            dropitem(loop, c[loop].items[1].id, 0, 141, TRUE);
-          }
+          /* *** CHANGED FROM ORIGINAL IMPLEMENTATION ***
+           * The original loop advanced itemcount, then dropped slot 0 using
+           * slot 1's id. Drop slot 0 repeatedly so remove/drop stay in sync.
+           */
+          while (c[loop].numitems)
+            dropitem(loop, c[loop].items[0].id, 0, 141, TRUE);
         }
 
         shortupdate(0);
